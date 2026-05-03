@@ -32,37 +32,44 @@ async function handleAgentRequest() {
   addChatMessage('user', 'You', rawUrls ? `Question: ${question || 'Summarize pages'}\nURLs:\n${rawUrls}` : `Question: ${question}`);
   clearAgentLog();
   setStatus('Preparing your request...');
-  addAgentLog('Agent', 'Planning', 'Setu will fetch the page content, extract the important details, and then create an answer based on the request.');
+  addAgentLog('Agent', 'Planning', 'Setu will analyze the question and use page content if URLs are provided.');
 
-  if (!rawUrls) {
-    setStatus('Please add at least one URL.', true);
-    addAgentLog('Agent', 'Validation', 'No URLs were provided. Setu needs at least one page to read.');
-    return;
-  }
-
-  const urls = rawUrls.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  addAgentLog('Tool', 'WebFetcher', `Fetching content from ${urls.length} URL(s)...`);
-  setStatus('Fetching website content...');
-
+  const urls = rawUrls ? rawUrls.split(/\r?\n/).map((line) => line.trim()).filter(Boolean) : [];
   const siteSummaries = [];
-  for (const url of urls) {
-    addAgentLog('Tool', 'WebFetcher', `Loading ${url}`);
-    const result = await fetchWebsiteText(url);
-    siteSummaries.push(result);
-    if (result.error) {
-      addAgentLog('Tool Result', 'WebFetcher', `Failed to fetch ${url}: ${result.error}`);
-    } else {
-      addAgentLog('Tool Result', 'TextExtractor', `Extracted ${result.text.length} characters from ${url}.`);
+
+  if (urls.length) {
+    addAgentLog('Tool', 'WebFetcher', `Fetching content from ${urls.length} URL(s)...`);
+    setStatus('Fetching website content...');
+
+    for (const url of urls) {
+      addAgentLog('Tool', 'WebFetcher', `Loading ${url}`);
+      const result = await fetchWebsiteText(url);
+      siteSummaries.push(result);
+      if (result.error) {
+        addAgentLog('Tool Result', 'WebFetcher', `Failed to fetch ${url}: ${result.error}`);
+      } else {
+        addAgentLog('Tool Result', 'TextExtractor', `Extracted ${result.text.length} characters from ${url}.`);
+      }
     }
+  } else {
+    addAgentLog('Agent', 'Fallback', 'No URLs were provided. Setu will answer using internal reasoning only.');
   }
 
   const validTexts = siteSummaries.filter((item) => item.text).map((item) => item.text);
   updateSourcePanel(siteSummaries);
 
-  if (!validTexts.length) {
-    setStatus('No readable content was extracted.', true);
-    addAgentLog('Agent', 'Troubleshooting', 'No valid content was available to analyze.');
-    addChatMessage('assistant', assistantName, 'I could not read any of the provided pages. Please check the URLs or try different websites.');
+  if (!validTexts.length && !question) {
+    setStatus('Please ask a question or provide at least one URL.', true);
+    addAgentLog('Agent', 'Validation', 'No question and no URLs were provided.');
+    return;
+  }
+
+  if (!validTexts.length && question) {
+    addAgentLog('Agent', 'Reasoning', 'There is no usable page content, so I am answering the question directly from my agent reasoning.');
+    setStatus('Answering without page content...');
+    const answer = fallbackAnswer(question);
+    addAgentLog('Agent', 'Conclusion', 'Setu generated an answer from the question alone.');
+    addChatMessage('assistant', assistantName, answer);
     saveSession();
     return;
   }
@@ -76,6 +83,28 @@ async function handleAgentRequest() {
   setStatus('Setu has completed the analysis.');
   addChatMessage('assistant', assistantName, answer);
   saveSession();
+}
+
+function fallbackAnswer(question) {
+  const normalized = question.trim();
+  if (!normalized) {
+    return 'Please ask a question so I can help you.';
+  }
+
+  const lower = normalized.toLowerCase();
+  if (lower.startsWith('who')) {
+    return `I don't have page information right now, but I can still answer your question: ${normalized}`;
+  }
+  if (lower.startsWith('what')) {
+    return `I don't have specific page data, but here is a general answer: ${normalized}`;
+  }
+  if (lower.startsWith('how')) {
+    return `I am answering from my internal reasoning mode. Generally speaking, ${normalized}`;
+  }
+  if (lower.startsWith('why')) {
+    return `Without page sources, I can still provide a general explanation: ${normalized}`;
+  }
+  return `I don't have URLs to read, but I can still help with your question: ${normalized}`;
 }
 
 function addChatMessage(role, label, text) {

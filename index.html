@@ -1,1 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Setu AI Agent</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <span class="brand">Setu AI Agent</span>
+          <p class="hero-copy">A smart browser agent that reads websites, extracts key facts, and answers your questions with reasoning, sources, and clear explanations.</p>
+        </div>
+        <div class="hero-actions">
+          <button id="clearButton">Clear Chat</button>
+          <button id="exportButton">Export Conversation</button>
+        </div>
+      </header>
+      <main class="layout">
+        <aside class="panel panel--controls">
+          <div class="panel-header">
+            <h2>Agent Controls</h2>
+            <p>Enter URLs and ask Setu anything. Setu will use the pages as its knowledge source.</p>
+          </div>
+          <label for="urlInput">Website URLs (one per line)</label>
+          <textarea id="urlInput" rows="5" placeholder="https://example.com"></textarea>
+
+          <label for="questionInput">Question or task</label>
+          <textarea id="questionInput" rows="4" placeholder="e.g. What is the main point of this page?"></textarea>
+
+          <div class="option-row">
+            <label><input type="checkbox" id="summaryMode" /> Summarize pages only</label>
+          </div>
+          <div class="option-row">
+            <label><input type="checkbox" id="showSources" checked /> Show source details</label>
+          </div>
+
+          <button id="askButton">Send to Setu</button>
+
+          <div class="settings">
+            <h3>Agent settings</h3>
+            <p class="small-copy">Use the options below to control how Setu interprets your request.</p>
+            <label><input type="checkbox" id="autoScroll" checked /> Auto-scroll conversation</label>
+          </div>
+
+          <div class="capabilities">
+            <h3>Capabilities</h3>
+            <ul>
+              <li>Fetch site content from URLs</li>
+              <li>Extract readable text and metadata</li>
+              <li>Answer questions and summarize pages</li>
+              <li>Log reasoning and source findings</li>
+            </ul>
+          </div>
+        </aside>
+
+        <section class="panel panel--output">
+          <div class="panel-header panel-header--output">
+            <div>
+              <h2>Agent Conversation</h2>
+              <p class="status" id="statusMessage">Ready to assist.</p>
+            </div>
+          </div>
+
+          <div class="chat" id="chatArea"></div>
+          <div class="agent-log" id="agentLog"></div>
+          <div class="source-panel" id="sourcePanel"></div>
+        </section>
+      </main>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
 
